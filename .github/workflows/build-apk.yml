@@ -1,4 +1,4 @@
-name: Build Exam Browser Siswa APK
+name: Build Exam Browser Siswa APK (Debug Signed)
 
 on:
   workflow_dispatch:
@@ -50,12 +50,12 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build APK
-        run: gradle --no-daemon -p "$PROJECT_DIR" assembleRelease
+      - name: Build signed debug APK
+        run: gradle --no-daemon -p "$PROJECT_DIR" assembleDebug
 
-      - name: Upload APK
+      - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Exam-Browser-Siswa-APK
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/release/app-release-unsigned.apk
+          name: Exam-Browser-Siswa-APK-Debug-Signed
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
