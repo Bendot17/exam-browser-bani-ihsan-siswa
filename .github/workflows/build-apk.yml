@@ -15,6 +15,30 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      - name: Find and extract Android project ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP_FILE="$(find . -maxdepth 2 -type f -iname '*Siswa*GitHub*Build*.zip' -print -quit)"
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ZIP proyek APK Siswa tidak ditemukan di repositori. Unggah ZIP proyek ke folder utama repositori."
+            exit 1
+          fi
+          mkdir -p build-source
+          unzip -q "$ZIP_FILE" -d build-source
+          if [ ! -f build-source/settings.gradle ] && [ ! -f build-source/settings.gradle.kts ]; then
+            SETTINGS_FILE="$(find build-source -mindepth 2 -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
+            if [ -z "$SETTINGS_FILE" ]; then
+              echo "settings.gradle tidak ditemukan setelah ZIP diekstrak."
+              exit 1
+            fi
+            PROJECT_DIR="$(dirname "$SETTINGS_FILE")"
+          else
+            PROJECT_DIR="build-source"
+          fi
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Proyek Android ditemukan di: $PROJECT_DIR"
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -27,11 +51,11 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build APK
-        run: gradle --no-daemon assembleRelease
+        run: gradle --no-daemon -p "$PROJECT_DIR" assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Exam-Browser-Siswa-APK
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/release/app-release-unsigned.apk
           if-no-files-found: error
